@@ -14,7 +14,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# AUTO-REFRESH SETIAP 10 DETIK UNTUK JAM LIVE
+# AUTO-REFRESH SETIAP 10 DETIK
 st_autorefresh(interval=10000, key="datarefresh")
 
 # --- 2. CUSTOM CSS ---
@@ -35,7 +35,6 @@ st.markdown("""
         color: white;
         font-weight: bold;
     }
-    /* Kotak Sampel Warna Legend */
     .color-box {
         display: inline-block;
         width: 14px;
@@ -70,7 +69,7 @@ def get_styled_title(title_name):
     info = syarat_title.get(title_name, {"icon": "❓", "color": "white"})
     return f'<span style="color:{info["color"]}; font-weight:bold; text-shadow: 1px 1px 2px black;">{info["icon"]} {title_name}</span>'
 
-# --- 4. DATA LOADING (DIPERKETAT) ---
+# --- 4. DATA LOADING (STRICT FILTER) ---
 @st.cache_data
 def load_data(sheet):
     try:
@@ -79,20 +78,22 @@ def load_data(sheet):
         df_master = pd.read_excel(file, sheet_name='Kompensasi')
         df_list = pd.read_excel(file, sheet_name='List Kompensasi')
         
-        # 1. Hapus baris yang semua kolomnya kosong (NaN)
+        # Membersihkan baris hantu dan 'nan'
         df_member = df_member.dropna(how='all')
+        if 'Nama' in df_member.columns:
+            # Ubah ke string, hapus spasi, dan lowercase untuk mempermudah filter
+            df_member['Nama'] = df_member['Nama'].astype(str).str.strip()
+            # Buang semua baris yang isinya 'nan', 'none', atau kosong
+            df_member = df_member[~df_member['Nama'].str.lower().isin(['nan', 'none', '', 'null'])]
+        
+        # Bersihkan df_list juga agar bonus tepat sasaran
         df_list = df_list.dropna(how='all')
-
-        # 2. Hapus baris jika kolom 'Nama' kosong atau bernilai 'nan'
-        df_member['Nama'] = df_member['Nama'].astype(str).str.strip()
-        df_member = df_member[~df_member['Nama'].isin(['nan', 'None', '', 'NaN', 'NAN'])]
+        if 'Nama' in df_list.columns:
+            df_list['Nama'] = df_list['Nama'].astype(str).str.strip()
+            df_list = df_list[~df_list['Nama'].str.lower().isin(['nan', 'none', '', 'null'])]
         
-        df_list['Nama'] = df_list['Nama'].astype(str).str.strip()
-        df_list = df_list[~df_list['Nama'].isin(['nan', 'None', '', 'NaN', 'NAN'])]
-        
-        # 3. Konversi data
         df_member['Tanggal_Join'] = pd.to_datetime(df_member['Tanggal_Join'], errors='coerce')
-        df_member = df_member.dropna(subset=['Tanggal_Join']) # Pastikan tanggal valid
+        df_member = df_member.dropna(subset=['Tanggal_Join'])
         
         df_member['Total_Gems_Stats'] = pd.to_numeric(df_member['Total_Gems_Stats'], errors='coerce').fillna(0).astype(int)
         df_member['Total_XP_Stats'] = pd.to_numeric(df_member['Total_XP_Stats'], errors='coerce').fillna(0).astype(int)
@@ -105,11 +106,8 @@ def load_data(sheet):
 # --- 5. SIDEBAR ---
 with st.sidebar:
     st.header("🎮 MabarClan")
-
-    # Sinkronisasi Waktu WIB
     tz_jkt = pytz.timezone('Asia/Jakarta')
     now = datetime.now(tz_jkt)
-
     st.markdown(f"""
         <div style="background-color: #1e2130; padding: 15px; border-radius: 10px; border: 2px solid #32CD32; text-align: center;">
             <h1 style="color: #32CD32; margin: 0; font-family: 'Courier New';">{now.strftime('%H:%M:%S')}</h1>
@@ -119,7 +117,7 @@ with st.sidebar:
     """, unsafe_allow_html=True)
     st.divider()
     periode = st.selectbox("Pilih Periode Data:", ["All Time", "April", "Mei", "Juni"])
-    st.info("**Version:** 1.2\n- Fixed Visual UI/UX\n- Fixed Member Population\n- Data Cleaning Optimized")
+    st.info("**Version:** 1.2\n- Fixed UI/UX for light mode\n- New Pie Chart Contribution\n- New Clock & Date Display\n- Updated Data Gems & XP")
 
 df, df_master, df_list = load_data(periode)
 
@@ -129,13 +127,13 @@ if not df.empty:
     total_gems_clan = int(df['Total_Gems_Stats'].sum())
     total_xp_clan = int(df['Total_XP_Stats'].sum())
     
-    # PERBAIKAN POPULASI: Hanya hitung baris yang Nama-nya valid
-    populasi_valid = len(df)
+    # Perbaikan Populasi: Hanya menghitung member yang lulus filter 'nan'
+    populasi_fix = len(df)
     
     c1, c2, c3, c4 = st.columns(4)
     c1.metric("Total Gems Clan", f"{total_gems_clan:,}")
     c2.metric("Total XP Clan", f"{total_xp_clan:,}")
-    c3.metric("Populasi Member", populasi_valid)
+    c3.metric("Populasi Member", populasi_fix)
     c4.metric("Target Harian", "3,000 Gems")
 
     st.divider()
@@ -158,8 +156,8 @@ if not df.empty:
                 match = df_master[df_master['Jenis Kompensasi'] == b['Jenis Kompensasi']]
                 if not match.empty: bonus_val += int(match.iloc[0]['Gems Kompensasi'])
             
-            gems_now = st.number_input("Gems Stats Saat Ini:", value=int(data_u['Total_Gems_Stats']), step=100)
-            xp_now = st.number_input("XP Stats Saat Ini:", value=int(data_u['Total_XP_Stats']), step=100)
+            gems_now = st.number_input("Gems Stats Saat Ini [HARAP UPDATE BAGIAN INI]:", value=int(data_u['Total_Gems_Stats']), step=100)
+            xp_now = st.number_input("XP Stats Saat Ini [HARAP UPDATE BAGIAN INI]:", value=int(data_u['Total_XP_Stats']), step=100)
             
             if st.button("🚀 Update & Cek Status"):
                 kelebihan_temp = int((gems_now + bonus_val) - target_kumulatif)
@@ -211,7 +209,6 @@ if not df.empty:
             res2.metric("Total Bonus", f"+{int(bonus_val):,}")
             res3.metric("Score Kontribusi", f"{(total_synergy_share * 100):.2f}%")
 
-    # --- TAB GLOBAL LEADERBOARD ---
     with tab2:
         leader_list = []
         for _, row in df.iterrows():
