@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import random
 from datetime import datetime
+import pytz
 from streamlit_autorefresh import st_autorefresh 
 import plotly.express as px 
 
@@ -91,11 +92,16 @@ def load_data(sheet):
 # --- 5. SIDEBAR ---
 with st.sidebar:
     st.header("🎮 MabarClan")
-    now = datetime.now()
+
+    # Sinkronisasi Waktu WIB
+    tz_jkt = pytz.timezone('Asia/Jakarta')
+    now = datetime.now(tz_jkt)
+
     st.markdown(f"""
         <div style="background-color: #1e2130; padding: 15px; border-radius: 10px; border: 2px solid #32CD32; text-align: center;">
             <h1 style="color: #32CD32; margin: 0; font-family: 'Courier New';">{now.strftime('%H:%M:%S')}</h1>
             <p style="font-size: 0.9em; margin: 0; color: #808080;">{now.strftime('%A, %d %b %Y')}</p>
+            <p style="font-size: 0.7em; margin: 0; color: #32CD32; font-weight: bold;">ZONA WAKTU: WIB</p>
         </div>
     """, unsafe_allow_html=True)
     st.divider()
