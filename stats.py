@@ -70,29 +70,30 @@ def get_styled_title(title_name):
     info = syarat_title.get(title_name, {"icon": "❓", "color": "white"})
     return f'<span style="color:{info["color"]}; font-weight:bold; text-shadow: 1px 1px 2px black;">{info["icon"]} {title_name}</span>'
 
-# --- 4. DATA LOADING ---
+# --- 4. DATA LOADING (DIPERKETAT) ---
 @st.cache_data
 def load_data(sheet):
     try:
-        # Pastikan nama file di GitHub sama persis dengan yang tertulis di bawah ini
         file = 'data_member.xlsx'
         df_member = pd.read_excel(file, sheet_name=sheet)
         df_master = pd.read_excel(file, sheet_name='Kompensasi')
         df_list = pd.read_excel(file, sheet_name='List Kompensasi')
         
-        # Membersihkan baris kosong (NaN) yang dibaca oleh Streamlit Cloud
+        # 1. Hapus baris yang semua kolomnya kosong (NaN)
         df_member = df_member.dropna(how='all')
         df_list = df_list.dropna(how='all')
 
-        # Filter ketat: Hanya ambil baris yang kolom 'Nama' nya berisi teks valid
+        # 2. Hapus baris jika kolom 'Nama' kosong atau bernilai 'nan'
         df_member['Nama'] = df_member['Nama'].astype(str).str.strip()
         df_member = df_member[~df_member['Nama'].isin(['nan', 'None', '', 'NaN', 'NAN'])]
         
         df_list['Nama'] = df_list['Nama'].astype(str).str.strip()
         df_list = df_list[~df_list['Nama'].isin(['nan', 'None', '', 'NaN', 'NAN'])]
         
-        # Konversi tipe data setelah pembersihan
-        df_member['Tanggal_Join'] = pd.to_datetime(df_member['Tanggal_Join'])
+        # 3. Konversi data
+        df_member['Tanggal_Join'] = pd.to_datetime(df_member['Tanggal_Join'], errors='coerce')
+        df_member = df_member.dropna(subset=['Tanggal_Join']) # Pastikan tanggal valid
+        
         df_member['Total_Gems_Stats'] = pd.to_numeric(df_member['Total_Gems_Stats'], errors='coerce').fillna(0).astype(int)
         df_member['Total_XP_Stats'] = pd.to_numeric(df_member['Total_XP_Stats'], errors='coerce').fillna(0).astype(int)
         
@@ -118,7 +119,7 @@ with st.sidebar:
     """, unsafe_allow_html=True)
     st.divider()
     periode = st.selectbox("Pilih Periode Data:", ["All Time", "April", "Mei", "Juni"])
-    st.info("**Version:** 1.2\n- Fixed Visual UI/UX for Light Mode\n- New Interactive System\n- New Pie Chart\n- Added XP Input\n- New Time Clock")
+    st.info("**Version:** 1.2\n- Fixed Visual UI/UX\n- Fixed Member Population\n- Data Cleaning Optimized")
 
 df, df_master, df_list = load_data(periode)
 
@@ -128,7 +129,7 @@ if not df.empty:
     total_gems_clan = int(df['Total_Gems_Stats'].sum())
     total_xp_clan = int(df['Total_XP_Stats'].sum())
     
-    # Perbaikan Populasi: Menggunakan jumlah baris setelah dibersihkan
+    # PERBAIKAN POPULASI: Hanya hitung baris yang Nama-nya valid
     populasi_valid = len(df)
     
     c1, c2, c3, c4 = st.columns(4)
@@ -157,8 +158,8 @@ if not df.empty:
                 match = df_master[df_master['Jenis Kompensasi'] == b['Jenis Kompensasi']]
                 if not match.empty: bonus_val += int(match.iloc[0]['Gems Kompensasi'])
             
-            gems_now = st.number_input("Gems Stats Saat Ini (HARAP UPDATE MANUAL):", value=int(data_u['Total_Gems_Stats']), step=100)
-            xp_now = st.number_input("XP Stats Saat Ini (HARAP UPDATE MANUAL):", value=int(data_u['Total_XP_Stats']), step=100)
+            gems_now = st.number_input("Gems Stats Saat Ini:", value=int(data_u['Total_Gems_Stats']), step=100)
+            xp_now = st.number_input("XP Stats Saat Ini:", value=int(data_u['Total_XP_Stats']), step=100)
             
             if st.button("🚀 Update & Cek Status"):
                 kelebihan_temp = int((gems_now + bonus_val) - target_kumulatif)
@@ -180,7 +181,7 @@ if not df.empty:
             else:
                 st.error(f"⚠️ **Gems:** Nunggak (Kurang {abs(kelebihan):,} Gems)")
             
-            # --- SYNERGY CONTRIBUTION CHART (FIXED COLORS) ---
+            # --- PIE CHART ---
             share_gems = (gems_now / total_gems_clan) if total_gems_clan > 0 else 0
             share_xp = (xp_now / total_xp_clan) if total_xp_clan > 0 else 0
             total_synergy_share = (share_gems + share_xp) / 2
@@ -192,45 +193,25 @@ if not df.empty:
             
             fig_synergy = px.pie(
                 pie_data, values="Nilai", names="Kategori", hole=0.6,
-                color="Kategori", color_discrete_map={"Diri Sendiri": "#32CD32", "Member Lain": "#262730"},
-                title=f"Skor Kontribusi Klan: {nama_user}"
+                color="Kategori", color_discrete_map={"Diri Sendiri": "#32CD32", "Member Lain": "#262730"}
             )
             fig_synergy.update_layout(showlegend=False, height=260, margin=dict(t=50, b=0, l=0, r=0), paper_bgcolor='rgba(0,0,0,0)', font=dict(color="white"))
-            fig_synergy.update_traces(textinfo='percent', textfont_size=14)
             st.plotly_chart(fig_synergy, use_container_width=True)
             
             st.markdown(f"""
-                <div style="display: flex; justify-content: center; gap: 30px; font-size: 0.95em; background-color: rgba(128,128,128,0.05); padding: 12px; border-radius: 10px; border: 1px solid rgba(128,128,128,0.1);">
-                    <div><span class="color-box" style="background-color: #32CD32; box-shadow: 0 0 5px #32CD32;"></span><b>Kontribusi {nama_user} (Hijau)</b></div>
-                    <div><span class="color-box" style="background-color: #262730; border: 1px solid #444;"></span><b>Member Klan Lain (Abu)</b></div>
+                <div style="display: flex; justify-content: center; gap: 30px; font-size: 0.9em; background-color: rgba(128,128,128,0.05); padding: 12px; border-radius: 10px;">
+                    <div><span class="color-box" style="background-color: #32CD32;"></span><b>Kontribusi {nama_user}</b></div>
+                    <div><span class="color-box" style="background-color: #262730;"></span><b>Member Lain</b></div>
                 </div>
             """, unsafe_allow_html=True)
 
-            # --- PROGRESS RANK ---
-            ranks_order = ["THE CASUAL", "THE DISCIPLINE", "THE GRINDER", "THE SULTAN", "THE LEGEND", "THE LORD"]
-            if rank_now != "THE LORD":
-                current_idx = ranks_order.index(rank_now)
-                target_rank = ranks_order[current_idx + 1]
-                info_target = syarat_title[target_rank]
-                prog_gems = min(100, int((max(0, kelebihan) / info_target['min_kelebihan'] * 100))) if info_target['min_kelebihan'] > 0 else 100
-                prog_xp = min(100, int((xp_now / info_target['min_xp'] * 100))) if info_target['min_xp'] > 0 else 100
-                total_progress = int((prog_gems + prog_xp) / 2)
-                
-                st.write(f"**Progress ke {target_rank}: {total_progress}%**")
-                st.progress(total_progress / 100)
-                
-                st.markdown(f"### 🚀 Syarat Naik ke {get_styled_title(target_rank)}:", unsafe_allow_html=True)
-                if kelebihan < info_target['min_kelebihan']:
-                    st.write(f"🔸 Gems Kurang: **{int(info_target['min_kelebihan'] - kelebihan):,} Gems**")
-                if xp_now < info_target['min_xp']:
-                    st.write(f"🔸 XP Kurang: **{int(info_target['min_xp'] - xp_now):,} XP**")
-                
             st.divider()
             res1, res2, res3 = st.columns(3)
             res1.metric("Lama Bergabung", f"{hari_aktif} Hari")
             res2.metric("Total Bonus", f"+{int(bonus_val):,}")
             res3.metric("Score Kontribusi", f"{(total_synergy_share * 100):.2f}%")
 
+    # --- TAB GLOBAL LEADERBOARD ---
     with tab2:
         leader_list = []
         for _, row in df.iterrows():
@@ -273,6 +254,6 @@ if not df.empty:
             st.divider()
 
 else:
-    st.warning("Data tidak terbaca.")
+    st.warning("Data tidak terbaca atau Excel kosong.")
 
-st.markdown("<br><hr><center><b>MabarClan System v1.2 </b></center>", unsafe_allow_html=True)
+st.markdown("<br><hr><center><b>MabarClan System v1.2</b></center>", unsafe_allow_html=True)
