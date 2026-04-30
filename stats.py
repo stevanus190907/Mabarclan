@@ -69,7 +69,7 @@ def get_styled_title(title_name):
     info = syarat_title.get(title_name, {"icon": "❓", "color": "white"})
     return f'<span style="color:{info["color"]}; font-weight:bold; text-shadow: 1px 1px 2px black;">{info["icon"]} {title_name}</span>'
 
-# --- 4. DATA LOADING (STRICT FILTER) ---
+# --- 4. DATA LOADING ---
 @st.cache_data
 def load_data(sheet):
     try:
@@ -78,15 +78,11 @@ def load_data(sheet):
         df_master = pd.read_excel(file, sheet_name='Kompensasi')
         df_list = pd.read_excel(file, sheet_name='List Kompensasi')
         
-        # Membersihkan baris hantu dan 'nan'
         df_member = df_member.dropna(how='all')
         if 'Nama' in df_member.columns:
-            # Ubah ke string, hapus spasi, dan lowercase untuk mempermudah filter
             df_member['Nama'] = df_member['Nama'].astype(str).str.strip()
-            # Buang semua baris yang isinya 'nan', 'none', atau kosong
             df_member = df_member[~df_member['Nama'].str.lower().isin(['nan', 'none', '', 'null'])]
         
-        # Bersihkan df_list juga agar bonus tepat sasaran
         df_list = df_list.dropna(how='all')
         if 'Nama' in df_list.columns:
             df_list['Nama'] = df_list['Nama'].astype(str).str.strip()
@@ -126,8 +122,6 @@ if not df.empty:
     
     total_gems_clan = int(df['Total_Gems_Stats'].sum())
     total_xp_clan = int(df['Total_XP_Stats'].sum())
-    
-    # Perbaikan Populasi: Hanya menghitung member yang lulus filter 'nan'
     populasi_fix = len(df)
     
     c1, c2, c3, c4 = st.columns(4)
@@ -156,8 +150,8 @@ if not df.empty:
                 match = df_master[df_master['Jenis Kompensasi'] == b['Jenis Kompensasi']]
                 if not match.empty: bonus_val += int(match.iloc[0]['Gems Kompensasi'])
             
-            gems_now = st.number_input("Gems Stats Saat Ini [HARAP UPDATE BAGIAN INI]:", value=int(data_u['Total_Gems_Stats']), step=100)
-            xp_now = st.number_input("XP Stats Saat Ini [HARAP UPDATE BAGIAN INI]:", value=int(data_u['Total_XP_Stats']), step=100)
+            gems_now = st.number_input("Gems Stats Saat Ini[HARAP UPDATE BAGIAN INI]:", value=int(data_u['Total_Gems_Stats']), step=100)
+            xp_now = st.number_input("XP Stats Saat Ini[HARAP UPDATE BAGIAN INI]:", value=int(data_u['Total_XP_Stats']), step=100)
             
             if st.button("🚀 Update & Cek Status"):
                 kelebihan_temp = int((gems_now + bonus_val) - target_kumulatif)
@@ -184,31 +178,38 @@ if not df.empty:
             share_xp = (xp_now / total_xp_clan) if total_xp_clan > 0 else 0
             total_synergy_share = (share_gems + share_xp) / 2
             
-            pie_data = pd.DataFrame({
-                "Kategori": ["Diri Sendiri", "Member Lain"],
-                "Nilai": [total_synergy_share, max(0, 1 - total_synergy_share)]
-            })
-            
-            fig_synergy = px.pie(
-                pie_data, values="Nilai", names="Kategori", hole=0.6,
-                color="Kategori", color_discrete_map={"Diri Sendiri": "#32CD32", "Member Lain": "#262730"}
-            )
+            pie_data = pd.DataFrame({"Kategori": ["Diri Sendiri", "Member Lain"], "Nilai": [total_synergy_share, max(0, 1 - total_synergy_share)]})
+            fig_synergy = px.pie(pie_data, values="Nilai", names="Kategori", hole=0.6, color="Kategori", color_discrete_map={"Diri Sendiri": "#32CD32", "Member Lain": "#262730"})
             fig_synergy.update_layout(showlegend=False, height=260, margin=dict(t=50, b=0, l=0, r=0), paper_bgcolor='rgba(0,0,0,0)', font=dict(color="white"))
             st.plotly_chart(fig_synergy, use_container_width=True)
             
-            st.markdown(f"""
-                <div style="display: flex; justify-content: center; gap: 30px; font-size: 0.9em; background-color: rgba(128,128,128,0.05); padding: 12px; border-radius: 10px;">
-                    <div><span class="color-box" style="background-color: #32CD32;"></span><b>Kontribusi {nama_user}</b></div>
-                    <div><span class="color-box" style="background-color: #262730;"></span><b>Member Lain</b></div>
-                </div>
-            """, unsafe_allow_html=True)
-
+            # --- PROGRESS RANK & SYARAT KURANG (FIXED) ---
+            ranks_order = ["THE CASUAL", "THE DISCIPLINE", "THE GRINDER", "THE SULTAN", "THE LEGEND", "THE LORD"]
+            if rank_now != "THE LORD":
+                current_idx = ranks_order.index(rank_now)
+                target_rank = ranks_order[current_idx + 1]
+                info_target = syarat_title[target_rank]
+                
+                prog_gems = min(100, int((max(0, kelebihan) / info_target['min_kelebihan'] * 100))) if info_target['min_kelebihan'] > 0 else 100
+                prog_xp = min(100, int((xp_now / info_target['min_xp'] * 100))) if info_target['min_xp'] > 0 else 100
+                total_progress = int((prog_gems + prog_xp) / 2)
+                
+                st.write(f"**Progress ke {target_rank}: {total_progress}%**")
+                st.progress(total_progress / 100)
+                
+                st.markdown(f"### 🚀 Syarat Naik ke {get_styled_title(target_rank)}:", unsafe_allow_html=True)
+                if kelebihan < info_target['min_kelebihan']:
+                    st.write(f"🔸 Gems Kurang: **{int(info_target['min_kelebihan'] - kelebihan):,} Gems**")
+                if xp_now < info_target['min_xp']:
+                    st.write(f"🔸 XP Kurang: **{int(info_target['min_xp'] - xp_now):,} XP**")
+                
             st.divider()
             res1, res2, res3 = st.columns(3)
             res1.metric("Lama Bergabung", f"{hari_aktif} Hari")
             res2.metric("Total Bonus", f"+{int(bonus_val):,}")
             res3.metric("Score Kontribusi", f"{(total_synergy_share * 100):.2f}%")
 
+    # --- TAB GLOBAL LEADERBOARD DLL TETAP ---
     with tab2:
         leader_list = []
         for _, row in df.iterrows():
@@ -220,7 +221,6 @@ if not df.empty:
             days = max(1, (datetime.now() - row['Tanggal_Join']).days)
             surp = int((row['Total_Gems_Stats'] + b_total) - (days * 3000))
             leader_list.append({"Nama": row['Nama'], "Kelebihan": surp, "XP": int(row['Total_XP_Stats']), "Rank": analisis_profil(surp, int(row['Total_XP_Stats']))})
-        
         df_lead = pd.DataFrame(leader_list)
         cl1, cl2 = st.columns(2)
         with cl1:
@@ -246,8 +246,7 @@ if not df.empty:
             rk, ds, rq = st.columns([1, 2, 1.5])
             with rk: st.markdown(f"### {get_styled_title(k)}", unsafe_allow_html=True)
             with ds: st.write(f"**Deskripsi:** \n{v['desc']}")
-            with rq:
-                st.write("**Syarat Minimal:**"); st.write(f"💎 Gems: {int(v['min_kelebihan']):,}"); st.write(f"⚔️ XP: {int(v['min_xp']):,}")
+            with rq: st.write("**Syarat Minimal:**"); st.write(f"💎 Gems: {int(v['min_kelebihan']):,}"); st.write(f"⚔️ XP: {int(v['min_xp']):,}")
             st.divider()
 
 else:
