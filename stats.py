@@ -74,22 +74,24 @@ def get_styled_title(title_name):
 @st.cache_data
 def load_data(sheet):
     try:
+        # Pastikan nama file di GitHub sama persis dengan yang tertulis di bawah ini
         file = 'data_member.xlsx'
         df_member = pd.read_excel(file, sheet_name=sheet)
         df_master = pd.read_excel(file, sheet_name='Kompensasi')
         df_list = pd.read_excel(file, sheet_name='List Kompensasi')
         
-        # Membersihkan baris yang benar-benar kosong di excel
+        # Membersihkan baris kosong (NaN) yang dibaca oleh Streamlit Cloud
         df_member = df_member.dropna(how='all')
         df_list = df_list.dropna(how='all')
 
-        # Memastikan kolom Nama tidak mengandung spasi dan menghapus baris jika Nama kosong (NaN)
+        # Filter ketat: Hanya ambil baris yang kolom 'Nama' nya berisi teks valid
         df_member['Nama'] = df_member['Nama'].astype(str).str.strip()
-        df_member = df_member[~df_member['Nama'].isin(['nan', 'None', '', 'NaN'])]
+        df_member = df_member[~df_member['Nama'].isin(['nan', 'None', '', 'NaN', 'NAN'])]
         
         df_list['Nama'] = df_list['Nama'].astype(str).str.strip()
-        df_list = df_list[~df_list['Nama'].isin(['nan', 'None', '', 'NaN'])]
+        df_list = df_list[~df_list['Nama'].isin(['nan', 'None', '', 'NaN', 'NAN'])]
         
+        # Konversi tipe data setelah pembersihan
         df_member['Tanggal_Join'] = pd.to_datetime(df_member['Tanggal_Join'])
         df_member['Total_Gems_Stats'] = pd.to_numeric(df_member['Total_Gems_Stats'], errors='coerce').fillna(0).astype(int)
         df_member['Total_XP_Stats'] = pd.to_numeric(df_member['Total_XP_Stats'], errors='coerce').fillna(0).astype(int)
@@ -116,7 +118,7 @@ with st.sidebar:
     """, unsafe_allow_html=True)
     st.divider()
     periode = st.selectbox("Pilih Periode Data:", ["All Time", "April", "Mei", "Juni"])
-    st.info("**Version:** 1.2\n- Fixed Visual UI/UX for Light Mode\n- New Interactive System\n- New Pie Chart Contribution\n- Added XP Input")
+    st.info("**Version:** 1.2\n- Fixed Visual UI/UX for Light Mode\n- New Interactive System\n- New Pie Chart\n- Added XP Input\n- New Time Clock")
 
 df, df_master, df_list = load_data(periode)
 
@@ -126,13 +128,13 @@ if not df.empty:
     total_gems_clan = int(df['Total_Gems_Stats'].sum())
     total_xp_clan = int(df['Total_XP_Stats'].sum())
     
-    # Perbaikan Populasi Member: menghitung baris setelah filter pembersihan
-    populasi = len(df)
+    # Perbaikan Populasi: Menggunakan jumlah baris setelah dibersihkan
+    populasi_valid = len(df)
     
     c1, c2, c3, c4 = st.columns(4)
     c1.metric("Total Gems Clan", f"{total_gems_clan:,}")
     c2.metric("Total XP Clan", f"{total_xp_clan:,}")
-    c3.metric("Populasi Member", populasi)
+    c3.metric("Populasi Member", populasi_valid)
     c4.metric("Target Harian", "3,000 Gems")
 
     st.divider()
@@ -178,37 +180,27 @@ if not df.empty:
             else:
                 st.error(f"⚠️ **Gems:** Nunggak (Kurang {abs(kelebihan):,} Gems)")
             
-            # --- SYNERGY CONTRIBUTION CHART (COLOR LOCKED) ---
+            # --- SYNERGY CONTRIBUTION CHART (FIXED COLORS) ---
             share_gems = (gems_now / total_gems_clan) if total_gems_clan > 0 else 0
             share_xp = (xp_now / total_xp_clan) if total_xp_clan > 0 else 0
             total_synergy_share = (share_gems + share_xp) / 2
             
-            # Persiapkan data dengan label spesifik untuk color_discrete_map
             pie_data = pd.DataFrame({
                 "Kategori": ["Diri Sendiri", "Member Lain"],
                 "Nilai": [total_synergy_share, max(0, 1 - total_synergy_share)]
             })
             
             fig_synergy = px.pie(
-                pie_data,
-                values="Nilai", 
-                names="Kategori", 
-                hole=0.6,
-                # Pemetaan warna wajib sinkron dengan label di atas
-                color="Kategori",
-                color_discrete_map={
-                    "Diri Sendiri": "#32CD32", 
-                    "Member Lain": "#262730"
-                },
+                pie_data, values="Nilai", names="Kategori", hole=0.6,
+                color="Kategori", color_discrete_map={"Diri Sendiri": "#32CD32", "Member Lain": "#262730"},
                 title=f"Skor Kontribusi Klan: {nama_user}"
             )
             fig_synergy.update_layout(showlegend=False, height=260, margin=dict(t=50, b=0, l=0, r=0), paper_bgcolor='rgba(0,0,0,0)', font=dict(color="white"))
             fig_synergy.update_traces(textinfo='percent', textfont_size=14)
             st.plotly_chart(fig_synergy, use_container_width=True)
             
-            # Legenda Visual yang Sesuai dengan Chart
             st.markdown(f"""
-                <div style="display: flex; justify-content: center; gap: 30px; font-size: 0.9em; background-color: rgba(128,128,128,0.05); padding: 12px; border-radius: 10px; border: 1px solid rgba(128,128,128,0.1);">
+                <div style="display: flex; justify-content: center; gap: 30px; font-size: 0.95em; background-color: rgba(128,128,128,0.05); padding: 12px; border-radius: 10px; border: 1px solid rgba(128,128,128,0.1);">
                     <div><span class="color-box" style="background-color: #32CD32; box-shadow: 0 0 5px #32CD32;"></span><b>Kontribusi {nama_user} (Hijau)</b></div>
                     <div><span class="color-box" style="background-color: #262730; border: 1px solid #444;"></span><b>Member Klan Lain (Abu)</b></div>
                 </div>
