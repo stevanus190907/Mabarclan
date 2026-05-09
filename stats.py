@@ -58,12 +58,12 @@ syarat_title = {
 }
 
 def analisis_profil(kelebihan, xp):
-    if kelebihan >= 500000 and xp >= 2000000: return "THE LORD"
-    elif kelebihan >= 150000 and xp >= 200000: return "THE LEGEND"
-    elif kelebihan >= 75000: return "THE SULTAN"
-    elif xp >= 150000: return "THE GRINDER"
-    elif kelebihan >= 0: return "THE DISCIPLINE"
-    else: return "THE CASUAL"
+    if kelebihan >= 500000 and xp >= 2000000: return "CO-LEADER"
+    elif kelebihan >= 150000 and xp >= 1000000: return "ELDER"
+    elif kelebihan >= 75000: return "VETERAN-GEMS"
+    elif xp >= 500000: return "VETERAN-XP"
+    elif kelebihan >= 21000: return "MEMBER"
+    else: return "ROOKIE"
 
 def get_styled_title(title_name):
     info = syarat_title.get(title_name, {"icon": "❓", "color": "white"})
@@ -240,7 +240,7 @@ if not df.empty:
 
     with tab4:
         st.subheader("🔱 Informasi Rank")
-        order = ["CO LEADER", "ELDER", "VETERAN GEMS", "VETERAN XP", "MEMBER", "ROOKIE"]
+        order = ["CO-LEADER", "ELDER", "VETERAN-GEMS", "VETERAN-XP", "MEMBER", "ROOKIE"]
         for k in order:
             v = syarat_title[k]
             rk, ds, rq = st.columns([1, 2, 1.5])
