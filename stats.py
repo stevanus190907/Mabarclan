@@ -42,9 +42,9 @@ st.markdown("""
 syarat_title = {
     "CO-LEADER": {"min_kelebihan": 500000, "min_xp": 2000000, "icon": "👑", "color": "#FFFFFF", "desc": "Legenda hidup MabarClan."},
     "ELDER": {"min_kelebihan": 150000, "min_xp": 1000000, "icon": "🔱", "color": "#FFD700", "desc": "Dewa donasi dan grinding."},
-    "VETERAN-GEMS": {"min_kelebihan": 75000, "min_xp": 0, "icon": "💎", "color": "#00FFFF", "desc": "Donatur kelas berat klan."},
+    "VETERAN-GEMS": {"min_kelebihan": 75000, "min_xp": 0, "icon": "💎", "color": "#00FFFF", "desc": "Donatur gems kelas berat klan."},
     "VETERAN-XP": {"min_kelebihan": 0, "min_xp": 500000, "icon": "⚔️", "color": "#FF4500", "desc": "Pejuang XP sangat aktif."},
-    "MEMBER": {"min_kelebihan": 21000, "min_xp": 0, "icon": "🛡️", "color": "#32CD32", "desc": "Selalu tepat waktu & berkontribusi."},
+    "MEMBER": {"min_kelebihan": 0, "min_xp": 0, "icon": "🛡️", "color": "#32CD32", "desc": "Berkontribusi setidaknya 7 hari diklan sesuai syarat."},
     "ROOKIE": {"min_kelebihan": -9999999, "min_xp": 0, "icon": "🐢", "color": "#808080", "desc": "Status sedang nunggak atau member baru."}
 }
 
