@@ -53,7 +53,7 @@ def analisis_profil(kelebihan, xp):
     elif kelebihan >= 150000 and xp >= 1000000: return "ELDER"
     elif kelebihan >= 75000: return "VETERAN-GEMS"
     elif xp >= 500000: return "VETERAN-XP"
-    elif kelebihan >= 21000: return "MEMBER"
+    elif kelebihan >= 0: return "MEMBER"
     else: return "ROOKIE"
 
 def get_styled_title(title_name):
