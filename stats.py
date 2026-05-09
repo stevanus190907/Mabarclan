@@ -44,7 +44,7 @@ syarat_title = {
     "ELDER": {"min_kelebihan": 150000, "min_xp": 1000000, "icon": "🔱", "color": "#FFD700", "desc": "Dewa donasi dan grinding."},
     "VETERAN-GEMS": {"min_kelebihan": 75000, "min_xp": 0, "icon": "💎", "color": "#00FFFF", "desc": "Donatur gems kelas berat klan."},
     "VETERAN-XP": {"min_kelebihan": 0, "min_xp": 500000, "icon": "⚔️", "color": "#FF4500", "desc": "Pejuang XP sangat aktif."},
-    "MEMBER": {"min_kelebihan": 0, "min_xp": 0, "icon": "🛡️", "color": "#32CD32", "desc": "Berkontribusi setidaknya 7 hari diklan sesuai syarat."},
+    "MEMBER": {"min_kelebihan": 0, "min_xp": 0, "icon": "🛡️", "color": "#32CD32", "desc": "Berkontribusi setidaknya 7 hari di klan sesuai syarat."},
     "ROOKIE": {"min_kelebihan": -9999999, "min_xp": 0, "icon": "🐢", "color": "#808080", "desc": "Status sedang nunggak atau member baru."}
 }
 
@@ -85,11 +85,11 @@ def load_data(sheet):
 with st.sidebar:
     st.header("🎮 MabarClan")
     tz_jkt = pytz.timezone('Asia/Jakarta')
-    now = datetime.now(tz_jkt)
+    now_jkt = datetime.now(tz_jkt)
     st.markdown(f"""
         <div style="background-color: #1e2130; padding: 15px; border-radius: 10px; border: 2px solid #32CD32; text-align: center;">
-            <h1 style="color: #32CD32; margin: 0; font-family: 'Courier New';">{now.strftime('%H:%M:%S')}</h1>
-            <p style="font-size: 0.9em; margin: 0; color: #808080;">{now.strftime('%A, %d %b %Y')}</p>
+            <h1 style="color: #32CD32; margin: 0; font-family: 'Courier New';">{now_jkt.strftime('%H:%M:%S')}</h1>
+            <p style="font-size: 0.9em; margin: 0; color: #808080;">{now_jkt.strftime('%A, %d %b %Y')}</p>
         </div>
     """, unsafe_allow_html=True)
     st.divider()
@@ -118,27 +118,28 @@ if not df.empty:
         col_in, col_out = st.columns([1, 2])
         with col_in:
             st.subheader("Cek Statusmu")
-            nama_user = st.selectbox("Pilih Nama:", df['Nama'].unique())
+            nama_user = st.selectbox("Pilih Nama:", sorted(df['Nama'].unique()))
             data_u = df[df['Nama'] == nama_user].iloc[0]
             
-            # Hitung Logika Hari
+            # Hitung Logika Hari (Aman dari TZ error)
             tgl_join = data_u['Tanggal_Join'].replace(tzinfo=None)
-            hari_aktif = max(1, (datetime.now().replace(tzinfo=None) - tgl_join).days)
+            now_naive = datetime.now().replace(tzinfo=None)
+            hari_aktif = max(1, (now_naive - tgl_join).days)
             target_kumulatif = hari_aktif * 3000
             
             # Hitung Kompensasi
             bonus_val = 0
-            user_bonuses = df_list[df_list['Nama'] == nama_user] if not df_list.empty else pd.DataFrame()
-            for _, b in user_bonuses.iterrows():
-                match = df_master[df_master['Jenis Kompensasi'] == b['Jenis Kompensasi']]
-                if not match.empty: bonus_val += int(match.iloc[0]['Gems Kompensasi'])
+            if not df_list.empty:
+                user_bonuses = df_list[df_list['Nama'] == nama_user]
+                for _, b in user_bonuses.iterrows():
+                    match = df_master[df_master['Jenis Kompensasi'] == b['Jenis Kompensasi']]
+                    if not match.empty: bonus_val += int(match.iloc[0]['Gems Kompensasi'])
             
             gems_now = st.number_input("Gems Stats Saat Ini:", value=int(data_u['Total_Gems_Stats']), step=100)
             xp_now = st.number_input("XP Stats Saat Ini:", value=int(data_u['Total_XP_Stats']), step=100)
             
             if st.button("🚀 Update & Cek Status"):
                 kelebihan_temp = int((gems_now + bonus_val) - target_kumulatif)
-                rank_temp = analisis_profil(kelebihan_temp, xp_now)
                 if kelebihan_temp >= 0:
                     st.toast(f"Mantap {nama_user}! Kontribusi aman. 🔥", icon="✅")
                 else:
@@ -184,7 +185,6 @@ if not df.empty:
             res3.metric("Kontribusi Clan", f"{(total_synergy_share * 100):.2f}%")
 
     with tab2:
-        # LOGIKA LEADERBOARD GLOBAL
         leader_list = []
         for _, row in df.iterrows():
             b_total = 0
@@ -194,8 +194,8 @@ if not df.empty:
                     m = df_master[df_master['Jenis Kompensasi'] == b['Jenis Kompensasi']]
                     if not m.empty: b_total += int(m.iloc[0]['Gems Kompensasi'])
             
-            days = max(1, (datetime.now().replace(tzinfo=None) - row['Tanggal_Join'].replace(tzinfo=None)).days)
-            surp = int((row['Total_Gems_Stats'] + b_total) - (days * 3000))
+            h_aktif = max(1, (now_naive - row['Tanggal_Join'].replace(tzinfo=None)).days)
+            surp = int((row['Total_Gems_Stats'] + b_total) - (h_aktif * 3000))
             leader_list.append({
                 "Nama": row['Nama'], 
                 "Kelebihan": surp, 
