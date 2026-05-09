@@ -94,7 +94,7 @@ with st.sidebar:
     """, unsafe_allow_html=True)
     st.divider()
     periode = st.selectbox("Pilih Periode Data:", ["All Time", "April", "Mei", "Juni"])
-    st.info("**Version:** 1.2\n- Fixed UI/UX for light mode\n- New Pie Chart Contribution\n- New Clock & Date Display\n- Updated Data Gems & XP\n- Added Rules Rank Tab")
+    st.info("**Version:** 1.2.1\n- Updated Rank & Role Name\n- Adjust XP & Gems Needed for Rank\n- Added Rules Rank\n- Updated Data Member, Gems & XP")
 
 df, df_master, df_list = load_data(periode)
 
@@ -201,14 +201,14 @@ if not df.empty:
             st.divider()
 
     with tab5:
-        st.subheader("⚖️ Protokol & Kode Etik Jabatan")
+        st.subheader("⚖️ Rules Role/Jabatan")
         
         # Penjelasan Umum Sanksi dengan Alert
         st.error("""
-        **⚠️ PERINGATAN KERAS (SANKSI UMUM):**
+        **⚠️ PERINGATAN KERAS (SANKSI):**
         Pelanggaran terhadap aturan di bawah ini dapat dikenakan sanksi berupa:
         *   **Demote:** Penurunan pangkat secara permanen.
-        *   **Blacklist:** Dikeluarkan dari klan dan dilarang kembali (Ban).
+        *   **Blacklist:** Dikeluarkan dari klan (Ban).
         *   **Ganti Rugi:** Wajib mengganti seluruh kerugian material/aset klan yang disebabkan oleh pelanggaran tersebut.
         """)
 
@@ -218,7 +218,7 @@ if not df.empty:
             st.markdown(f"### {get_styled_title('ELDER')}", unsafe_allow_html=True)
             st.info("""
             **Wewenang & Kewajiban:**
-            1.  **Moderasi Member:** Berhak memberikan sanksi atau melakukan *kick* pada member yang nunggak. **Wajib** menyertakan bukti Screenshot (SS) Stats In-Game dan Website.
+            1.  **Moderasi Member:** Berhak memberikan sanksi atau melakukan *kick* pada member yang nunggak. **Wajib** menyertakan bukti Screenshot (SS) Stats In-Game dan Website yang valid.
             2.  **Rekrutmen:** Diperbolehkan mengundang (invite) member baru yang potensial.
             3.  **Konsistensi Stats:** Wajib mempertahankan minimal kelebihan Gems & XP sesuai syarat Elder. 
             
@@ -231,9 +231,9 @@ if not df.empty:
             st.warning("""
             **Wewenang & Kewajiban:**
             1.  **Keamanan World:** Dilarang keras merusak, mengambil barang, atau mengubah tatanan *World Clan* tanpa izin tertulis dari Leader.
-            2.  **Eksekusi Disiplin:** Berhak melakukan *kick* atau sanksi bagi member nunggak dengan bukti SS Stats In-Game dan Website yang valid.
-            3.  **Rekrutmen Strategis:** Diperbolehkan mengundang member baru untuk bergabung.
-            4.  **Standar Tinggi:** Wajib mempertahankan performa Gems & XP sesuai ketentuan Co-Leader.
+            2.  **Moderasi Member:** Berhak melakukan *kick* atau sanksi bagi member nunggak dengan bukti SS Stats In-Game dan Website yang valid.
+            3.  **Rekrutmen:** Diperbolehkan mengundang member baru untuk bergabung.
+            4.  **Konsistensi Stats:** Wajib mempertahankan performa Gems & XP sesuai ketentuan Co-Leader.
             
             **Aturan Penurunan Pangkat:**
             - Jika performa di bawah standar Co-Leader selama **5 hari**, jabatan akan diturunkan ke tingkat di bawahnya.
@@ -241,4 +241,4 @@ if not df.empty:
 else:
     st.warning("Data tidak terbaca atau Excel kosong.")
 
-st.markdown("<br><hr><center><b>MabarClan System v1.2</b></center>", unsafe_allow_html=True)
+st.markdown("<br><hr><center><b>MabarClan System v1.2.1</b></center>", unsafe_allow_html=True)
