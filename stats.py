@@ -201,36 +201,43 @@ if not df.empty:
             st.divider()
 
     with tab5:
-        st.subheader("⚖️ Rules & Tanggung Jawab Rank Atas")
+        st.subheader("⚖️ Protokol & Kode Etik Jabatan")
         
+        # Penjelasan Umum Sanksi dengan Alert
+        st.error("""
+        **⚠️ PERINGATAN KERAS (SANKSI UMUM):**
+        Pelanggaran terhadap aturan di bawah ini dapat dikenakan sanksi berupa:
+        *   **Demote:** Penurunan pangkat secara permanen.
+        *   **Blacklist:** Dikeluarkan dari klan dan dilarang kembali (Ban).
+        *   **Ganti Rugi:** Wajib mengganti seluruh kerugian material/aset klan yang disebabkan oleh pelanggaran tersebut.
+        """)
+
         col_elder, col_co = st.columns(2)
         
         with col_elder:
             st.markdown(f"### {get_styled_title('ELDER')}", unsafe_allow_html=True)
             st.info("""
-            **Tugas & Kewajiban:**
-            1. **Monitoring:** Memantau aktivitas member baru (Rookie).
-            2. **Recruitment:** Berhak memberikan saran calon member yang aktif.
-            3. **Donatur Tetap:** Wajib menjaga surplus Gems minimal **+150,000**.
-            4. **Disiplin:** Menjadi contoh dalam ketepatan waktu donasi harian.
+            **Wewenang & Kewajiban:**
+            1.  **Moderasi Member:** Berhak memberikan sanksi atau melakukan *kick* pada member yang nunggak. **Wajib** menyertakan bukti Screenshot (SS) Stats In-Game dan Website.
+            2.  **Rekrutmen:** Diperbolehkan mengundang (invite) member baru yang potensial.
+            3.  **Konsistensi Stats:** Wajib mempertahankan minimal kelebihan Gems & XP sesuai syarat Elder. 
             
-            **Sanksi:**
-            - Jika kelebihan Gems turun di bawah **+100,000** selama 3 hari berturut-turut, pangkat akan diturunkan ke Veteran/Member.
+            **Aturan Penurunan Pangkat:**
+            - Jika statistik berada di bawah ketentuan Elder selama **5 hari berturut-turut**, maka pangkat akan otomatis diturunkan.
             """)
             
         with col_co:
             st.markdown(f"### {get_styled_title('CO-LEADER')}", unsafe_allow_html=True)
             st.warning("""
-            **Tugas & Kewajiban:**
-            1. **Decision Maker:** Mengambil keputusan saat Leader tidak ada.
-            2. **Clan War/Event:** Mengatur strategi war dan koordinasi grup.
-            3. **Manajemen Data:** Membantu memvalidasi data donasi member.
-            4. **High Contributor:** Wajib menjaga surplus Gems **+500,000** & XP **2jt+**.
+            **Wewenang & Kewajiban:**
+            1.  **Keamanan World:** Dilarang keras merusak, mengambil barang, atau mengubah tatanan *World Clan* tanpa izin tertulis dari Leader.
+            2.  **Eksekusi Disiplin:** Berhak melakukan *kick* atau sanksi bagi member nunggak dengan bukti SS Stats In-Game dan Website yang valid.
+            3.  **Rekrutmen Strategis:** Diperbolehkan mengundang member baru untuk bergabung.
+            4.  **Standar Tinggi:** Wajib mempertahankan performa Gems & XP sesuai ketentuan Co-Leader.
             
-            **Sanksi:**
-            - Penurunan pangkat instan jika terjadi penyalahgunaan wewenang (Kick tanpa alasan) atau tidak aktif tanpa kabar lebih dari 2 hari.
+            **Aturan Penurunan Pangkat:**
+            - Jika performa di bawah standar Co-Leader selama **5 hari**, jabatan akan diturunkan ke tingkat di bawahnya.
             """)
-
 else:
     st.warning("Data tidak terbaca atau Excel kosong.")
 
