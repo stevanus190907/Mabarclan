@@ -73,7 +73,7 @@ def get_styled_title(title_name):
 @st.cache_data
 def load_data(sheet):
     try:
-        file = 'data_member_fix4.xlsx'
+        file = 'data_member_fix5.xlsx'
         df_member = pd.read_excel(file, sheet_name=sheet)
         df_master = pd.read_excel(file, sheet_name='Kompensasi')
         df_list = pd.read_excel(file, sheet_name='List Kompensasi')
@@ -240,7 +240,7 @@ if not df.empty:
 
     with tab4:
         st.subheader("🔱 Informasi Rank")
-        order = ["THE LORD", "THE LEGEND", "THE SULTAN", "THE GRINDER", "THE DISCIPLINE", "THE CASUAL"]
+        order = ["CO LEADER", "ELDER", "VETERAN GEMS", "VETERAN XP", "MEMBER", "ROOKIE"]
         for k in order:
             v = syarat_title[k]
             rk, ds, rq = st.columns([1, 2, 1.5])
