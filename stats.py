@@ -130,8 +130,8 @@ if not df.empty:
                 for _, b in user_bonuses.iterrows():
                     match = df_master[df_master['Jenis Kompensasi'] == b['Jenis Kompensasi']]
                     if not match.empty: bonus_val += int(match.iloc[0]['Gems Kompensasi'])
-            gems_now = st.number_input("Gems Stats Saat Ini:", value=int(data_u['Total_Gems_Stats']), step=100)
-            xp_now = st.number_input("XP Stats Saat Ini:", value=int(data_u['Total_XP_Stats']), step=100)
+            gems_now = st.number_input("Gems Stats Saat Ini [HARAP UPDATE BAGIAN INI]:", value=int(data_u['Total_Gems_Stats']), step=100)
+            xp_now = st.number_input("XP Stats Saat Ini [HARAP UPDATE BAGIAN INI]:", value=int(data_u['Total_XP_Stats']), step=100)
             if st.button("🚀 Update & Cek Status"):
                 kelebihan_temp = int((gems_now + bonus_val) - target_kumulatif)
                 if kelebihan_temp >= 0: st.toast(f"Mantap {nama_user}! Kontribusi aman. 🔥", icon="✅")
