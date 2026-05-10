@@ -81,10 +81,10 @@ def load_data(sheet):
         st.error(f"Error Load Data: {e}")
         return pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
 
-# --- 5. SIDEBAR ---
+# --- 5. SIDEBAR & TIME ---
 tz_jkt = pytz.timezone('Asia/Jakarta')
 now_jkt = datetime.now(tz_jkt)
-now_naive = now_jkt.replace(tzinfo=None) # Untuk kalkulasi tanggal join
+now_naive = now_jkt.replace(tzinfo=None)
 
 with st.sidebar:
     st.header("🎮 MabarClan")
@@ -96,7 +96,7 @@ with st.sidebar:
     """, unsafe_allow_html=True)
     st.divider()
     periode = st.selectbox("Pilih Periode Data:", ["All Time", "April", "Mei", "Juni"])
-    st.info("**Version:** 1.2.2\n- Accumulated Compensation Bonuses\n- Tracker Bonus Info\n- Timezone Sync Fix")
+    st.info("**Version:** 1.2.3\n- Leaderboard shows Pure Surplus Gems\n- Compensation accumulated to Surplus\n- Tracker Bonus Summary")
 
 df, df_master, df_list = load_data(periode)
 
@@ -123,12 +123,12 @@ if not df.empty:
             nama_user = st.selectbox("Pilih Nama:", sorted(df['Nama'].unique()))
             data_u = df[df['Nama'] == nama_user].iloc[0]
             
-            # Perhitungan Hari Aktif
+            # Hitung Hari & Target
             tgl_join = data_u['Tanggal_Join'].replace(tzinfo=None)
             hari_aktif = max(1, (now_naive - tgl_join).days)
             target_kumulatif = hari_aktif * 3000
             
-            # Perhitungan Akumulasi Bonus Kompensasi
+            # Hitung Total Bonus
             bonus_val = 0
             if not df_list.empty:
                 user_bonuses = df_list[df_list['Nama'] == nama_user]
@@ -137,22 +137,19 @@ if not df.empty:
                     if not match.empty: 
                         bonus_val += int(match.iloc[0]['Gems Kompensasi'])
 
-            gems_now = st.number_input("Gems Stats Saat Ini [HARAP UPDATE BAGIAN INI]:", value=int(data_u['Total_Gems_Stats']), step=100)
-            xp_now = st.number_input("XP Stats Saat Ini [HARAP UPDATE BAGIAN INI]:", value=int(data_u['Total_XP_Stats']), step=100)
+            gems_now = st.number_input("Gems Stats Saat Ini:", value=int(data_u['Total_Gems_Stats']), step=100)
+            xp_now = st.number_input("XP Stats Saat Ini:", value=int(data_u['Total_XP_Stats']), step=100)
             
             if st.button("🚀 Update & Cek Status"):
                 kelebihan_temp = int((gems_now + bonus_val) - target_kumulatif)
                 if kelebihan_temp >= 0: st.toast(f"Mantap {nama_user}! Kontribusi aman. 🔥", icon="✅")
                 else: st.toast(f"Ayo {nama_user}, target belum tercapai. 🐢", icon="⚠️")
             
-            # --- BAGIAN BAWAH TRACKER: INFO KOMPENSASI ---
             st.markdown("---")
-            st.markdown(f"### 💎 Info Bonus")
             st.metric("Total Bonus Kompensasi", f"{bonus_val:,} Gems")
-            st.caption(f"Bonus ini otomatis ditambahkan ke total stats saat pengecekan.")
+            st.caption("Bonus otomatis menambah nilai 'Kelebihan Gems' Anda.")
 
         with col_out:
-            # Gems Total = Stats + Bonus
             total_gems_user = gems_now + bonus_val
             kelebihan = int(total_gems_user - target_kumulatif)
             rank_now = analisis_profil(kelebihan, xp_now)
@@ -160,12 +157,13 @@ if not df.empty:
             st.markdown(f"## {nama_user} | {get_styled_title(rank_now)}", unsafe_allow_html=True)
             
             if kelebihan >= 0: 
-                st.success(f"✅ **Gems:** Aman (Kelebihan {kelebihan:,} Gems)")
+                st.success(f"✅ **Kelebihan Gems:** {kelebihan:,}")
             else: 
-                st.error(f"⚠️ **Gems:** Nunggak (Kurang {abs(kelebihan):,} Gems)")
+                st.error(f"⚠️ **Nunggak Gems:** {abs(kelebihan):,}")
             
-            st.write(f"Rincian: Stats ({gems_now:,}) + Bonus ({bonus_val:,}) = **{total_gems_user:,} Total**")
+            st.write(f"Rumus: (Stats {gems_now:,} + Bonus {bonus_val:,}) - Target {target_kumulatif:,}")
 
+            # Synergy Pie
             share_gems = (total_gems_user / total_gems_clan) if total_gems_clan > 0 else 0
             share_xp = (xp_now / total_xp_clan) if total_xp_clan > 0 else 0
             total_synergy_share = (share_gems + share_xp) / 2
@@ -175,18 +173,19 @@ if not df.empty:
             fig_synergy.update_layout(showlegend=False, height=260, margin=dict(t=30, b=0, l=0, r=0), paper_bgcolor='rgba(0,0,0,0)', font=dict(color="white"))
             st.plotly_chart(fig_synergy, use_container_width=True)
             
+            # Info Naik Rank
             ranks_order = ["ROOKIE", "MEMBER", "VETERAN-XP", "VETERAN-GEMS", "ELDER", "CO-LEADER"]
             if rank_now != "CO-LEADER":
                 idx = ranks_order.index(rank_now); target_rank = ranks_order[idx + 1]; info_target = syarat_title[target_rank]
-                st.markdown(f"### 🚀 Syarat Naik ke {get_styled_title(target_rank)}:", unsafe_allow_html=True)
-                if kelebihan < info_target['min_kelebihan']: st.write(f"🔸 Gems Kurang: **{int(info_target['min_kelebihan'] - kelebihan):,} Gems**")
-                if xp_now < info_target['min_xp']: st.write(f"🔸 XP Kurang: **{int(info_target['min_xp'] - xp_now):,} XP**")
+                st.markdown(f"### 🚀 Syarat ke {get_styled_title(target_rank)}:", unsafe_allow_html=True)
+                if kelebihan < info_target['min_kelebihan']: st.write(f"🔸 Kurang Kelebihan: **{int(info_target['min_kelebihan'] - kelebihan):,} Gems**")
+                if xp_now < info_target['min_xp']: st.write(f"🔸 Kurang XP: **{int(info_target['min_xp'] - xp_now):,} XP**")
             
             st.divider()
-            res1, res2, res3 = st.columns(3)
-            res1.metric("Lama Bergabung", f"{hari_aktif} Hari")
-            res2.metric("Tanggal Join", data_u['Tanggal_Join'].strftime('%d %b %Y'))
-            res3.metric("Kontribusi Clan", f"{(total_synergy_share * 100):.2f}%")
+            r1, r2, r3 = st.columns(3)
+            r1.metric("Lama Join", f"{hari_aktif} Hari")
+            r2.metric("Tanggal Join", data_u['Tanggal_Join'].strftime('%d %b %Y'))
+            r3.metric("Kontribusi", f"{(total_synergy_share * 100):.2f}%")
 
     with tab2:
         leader_list = []
@@ -199,24 +198,23 @@ if not df.empty:
                     if not m.empty: b_total += int(m.iloc[0]['Gems Kompensasi'])
             
             h_aktif = max(1, (now_naive - row['Tanggal_Join'].replace(tzinfo=None)).days)
-            # Akumulasi Stats + Kompensasi
-            total_gems_with_bonus = row['Total_Gems_Stats'] + b_total
-            surp = int(total_gems_with_bonus - (h_aktif * 3000))
+            # HITUNG KELEBIHAN SAJA (Stats + Bonus - Target)
+            kelebihan_murni = int((row['Total_Gems_Stats'] + b_total) - (h_aktif * 3000))
             
             leader_list.append({
                 "Nama": row['Nama'], 
-                "Total Gems (+Bonus)": total_gems_with_bonus,
-                "Kelebihan": surp, 
+                "Kelebihan Gems": kelebihan_murni, 
                 "XP": int(row['Total_XP_Stats']), 
-                "Rank": analisis_profil(surp, int(row['Total_XP_Stats']))
+                "Rank": analisis_profil(kelebihan_murni, int(row['Total_XP_Stats']))
             })
             
         df_lead = pd.DataFrame(leader_list)
         cl1, cl2 = st.columns(2)
         with cl1:
-            st.subheader("🥇 Top Gems Kelebihan")
-            dg = df_lead.sort_values('Kelebihan', ascending=False).head(15).reset_index(drop=True); dg.index += 1
-            st.table(dg[['Nama', 'Kelebihan', 'Total Gems (+Bonus)', 'Rank']])
+            st.subheader("🥇 Top Kelebihan Gems (Net)")
+            # Tampilkan hanya kolom Kelebihan Gems
+            dg = df_lead.sort_values('Kelebihan Gems', ascending=False).head(15).reset_index(drop=True); dg.index += 1
+            st.table(dg[['Nama', 'Kelebihan Gems', 'Rank']])
         with cl2:
             st.subheader("🏆 Top Grinder XP")
             dx = df_lead.sort_values('XP', ascending=False).head(15).reset_index(drop=True); dx.index += 1
@@ -239,34 +237,15 @@ if not df.empty:
 
     with tab5:
         st.subheader("⚖️ Rules Role/Jabatan")
-        st.error("""
-        **⚠️ PERINGATAN KERAS (SANKSI):**
-        Pelanggaran terhadap aturan di bawah ini dapat dikenakan sanksi berupa:
-        *   **Demote:** Penurunan pangkat secara permanen.
-        *   **Blacklist:** Dikeluarkan dari klan (Ban).
-        *   **Ganti Rugi:** Wajib mengganti seluruh kerugian material/aset klan yang disebabkan oleh pelanggaran tersebut.
-        """)
-
-        col_elder, col_co = st.columns(2)
-        with col_elder:
+        st.error("**⚠️ PERINGATAN KERAS:** Pelanggaran berat bisa berakibat Kick/Blacklist dan ganti rugi aset klan.")
+        c_eld, c_co = st.columns(2)
+        with c_eld:
             st.markdown(f"### {get_styled_title('ELDER')}", unsafe_allow_html=True)
-            st.info("""
-            **Wewenang & Kewajiban:**
-            1.  **Moderasi Member:** Berhak memberikan sanksi (kick) pada member yang nunggak. Wajib sertakan bukti SS Stats valid.
-            2.  **Rekrutmen:** Boleh mengundang member baru.
-            3.  **Konsistensi Stats:** Wajib menjaga kelebihan Gems & XP sesuai syarat.
-            """)
-            
-        with col_co:
+            st.info("Berhak moderasi member nunggak & invite member baru. Wajib jaga stats tetap di level Elder.")
+        with c_co:
             st.markdown(f"### {get_styled_title('CO-LEADER')}", unsafe_allow_html=True)
-            st.warning("""
-            **Wewenang & Kewajiban:**
-            1.  **Keamanan World:** Dilarang merusak tatanan World Clan tanpa izin Leader.
-            2.  **Moderasi Member:** Berhak kick member nunggak dengan bukti valid.
-            3.  **Rekrutmen:** Berhak mengundang member baru.
-            4.  **Konsistensi Stats:** Wajib mempertahankan performa rank tertinggi.
-            """)
+            st.warning("Dilarang merusak tatanan World Clan. Berhak moderasi penuh & invite. Wajib performa stabil.")
 else:
     st.warning("Data tidak terbaca atau Excel kosong.")
 
-st.markdown("<br><hr><center><b>MabarClan System v1.2.2</b></center>", unsafe_allow_html=True)
+st.markdown("<br><hr><center><b>MabarClan System v1.2.3</b></center>", unsafe_allow_html=True)
