@@ -237,7 +237,18 @@ if not df.empty:
 
     with tab5:
         st.subheader("⚖️ Rules Role/Jabatan")
-        st.error("**⚠️ PERINGATAN KERAS:** Pelanggaran berat bisa berakibat Kick/Blacklist dan ganti rugi aset klan.")
+        st.error("""
+        **⚠️ PERINGATAN KERAS (SANKSI):**
+
+        Pelanggaran terhadap aturan di bawah ini dapat dikenakan sanksi berupa:
+
+        *   **Demote:** Penurunan pangkat secara permanen.
+
+        *   **Blacklist:** Dikeluarkan dari klan (Ban).
+
+        *   **Ganti Rugi:** Wajib mengganti seluruh kerugian material/aset klan yang disebabkan oleh pelanggaran tersebut.
+        """)
+        
         c_eld, c_co = st.columns(2)
         with c_eld:
             st.markdown(f"### {get_styled_title('ELDER')}", unsafe_allow_html=True)
