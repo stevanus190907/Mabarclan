@@ -96,7 +96,7 @@ with st.sidebar:
     """, unsafe_allow_html=True)
     st.divider()
     periode = st.selectbox("Pilih Periode Data:", ["All Time", "April", "Mei", "Juni"])
-    st.info("**Version:** 1.2.3\n- Leaderboard shows Pure Surplus Gems\n- Compensation accumulated to Surplus\n- Tracker Bonus Summary")
+    st.info("**Version:** 1.2.1\n- Updated Rank & Role Name\n- Adjust XP & Gems Needed for Rank\n- Added Rules Rank\n- Updated Data Member, Gems & XP")
 
 df, df_master, df_list = load_data(periode)
 
@@ -137,8 +137,8 @@ if not df.empty:
                     if not match.empty: 
                         bonus_val += int(match.iloc[0]['Gems Kompensasi'])
 
-            gems_now = st.number_input("Gems Stats Saat Ini:", value=int(data_u['Total_Gems_Stats']), step=100)
-            xp_now = st.number_input("XP Stats Saat Ini:", value=int(data_u['Total_XP_Stats']), step=100)
+            gems_now = st.number_input("Gems Stats Saat Ini [HARAP UPDATE BAGIAN INI]:", value=int(data_u['Total_Gems_Stats']), step=100)
+            xp_now = st.number_input("XP Stats Saat Ini [HARAP UPDATE BAGIAN INI]:", value=int(data_u['Total_XP_Stats']), step=100)
             
             if st.button("🚀 Update & Cek Status"):
                 kelebihan_temp = int((gems_now + bonus_val) - target_kumulatif)
@@ -147,7 +147,7 @@ if not df.empty:
             
             st.markdown("---")
             st.metric("Total Bonus Kompensasi", f"{bonus_val:,} Gems")
-            st.caption("Bonus otomatis menambah nilai 'Kelebihan Gems' Anda.")
+            st.caption("Bonus otomatis diakumulasikan ke stats Anda.")
 
         with col_out:
             total_gems_user = gems_now + bonus_val
@@ -241,11 +241,42 @@ if not df.empty:
         c_eld, c_co = st.columns(2)
         with c_eld:
             st.markdown(f"### {get_styled_title('ELDER')}", unsafe_allow_html=True)
-            st.info("Berhak moderasi member nunggak & invite member baru. Wajib jaga stats tetap di level Elder.")
+            st.info("""
+            **Wewenang & Kewajiban:**
+
+            1.  **Moderasi Member:** Berhak memberikan sanksi atau melakukan *kick* pada member yang nunggak. **Wajib** menyertakan bukti Screenshot (SS) Stats In-Game dan Website yang valid.
+
+            2.  **Rekrutmen:** Diperbolehkan mengundang (invite) member baru yang potensial.
+
+            3.  **Konsistensi Stats:** Wajib mempertahankan minimal kelebihan Gems & XP sesuai syarat Elder. 
+
+            
+
+            **Aturan Penurunan Pangkat:**
+
+            - Jika statistik berada di bawah ketentuan Elder selama **5 hari berturut-turut**, maka pangkat akan otomatis diturunkan.
+            """)
+            
         with c_co:
             st.markdown(f"### {get_styled_title('CO-LEADER')}", unsafe_allow_html=True)
-            st.warning("Dilarang merusak tatanan World Clan. Berhak moderasi penuh & invite. Wajib performa stabil.")
+            st.warning("""
+            **Wewenang & Kewajiban:**
+
+            1.  **Keamanan World:** Dilarang keras merusak, mengambil barang, atau mengubah tatanan *World Clan* tanpa izin tertulis dari Leader.
+
+            2.  **Moderasi Member:** Berhak melakukan *kick* atau sanksi bagi member nunggak dengan bukti SS Stats In-Game dan Website yang valid.
+
+            3.  **Rekrutmen:** Diperbolehkan mengundang member baru untuk bergabung.
+
+            4.  **Konsistensi Stats:** Wajib mempertahankan performa Gems & XP sesuai ketentuan Co-Leader.
+
+            
+
+            **Aturan Penurunan Pangkat:**
+
+            - Jika performa di bawah standar Co-Leader selama **5 hari**, jabatan akan diturunkan ke tingkat di bawahnya.
+            """)
 else:
     st.warning("Data tidak terbaca atau Excel kosong.")
 
-st.markdown("<br><hr><center><b>MabarClan System v1.2.3</b></center>", unsafe_allow_html=True)
+st.markdown("<br><hr><center><b>MabarClan System v1.2.1</b></center>", unsafe_allow_html=True)
