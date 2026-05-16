@@ -64,7 +64,7 @@ def get_styled_title(title_name):
 @st.cache_data(ttl=60)
 def load_data(sheet):
     try:
-        file = 'data_member_fix6.xlsx'
+        file = 'data_member_fix7.xlsx'
         df_member = pd.read_excel(file, sheet_name=sheet)
         df_master = pd.read_excel(file, sheet_name='Kompensasi')
         df_list = pd.read_excel(file, sheet_name='List Kompensasi')
